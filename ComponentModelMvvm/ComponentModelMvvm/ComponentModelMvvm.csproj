@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup Label="Identity">
+		<Product>Rem.Core.ComponentModel.Mvvm</Product>
+		<PackageId>Rem.Core.ComponentModel.Mvvm</PackageId>
+		<Summary>
+			An MVVM package extending the core componentmodel package.
+		</Summary>
+		<Description>
+			An MVVM package extending the core componentmodel package.
+		</Description>
+		<RootNamespace>Rem.Core.ComponentModel.Mvvm</RootNamespace>
+		<Authors>Richard E. Munson</Authors>
+		<Copyright>Richard E. Munson, 2022</Copyright>
+		<WebPage>https://github.com/rmunson27/core-componentmodel-net/</WebPage>
+		<Version>1.0</Version>
+		<PackageTags>componentmodel;utilities;nestedpropertychange;propertychange;comparison;mvvm</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Outputs">
+		<TargetFrameworks>net461;netstandard2.0;net5.0</TargetFrameworks>
+		<OutputType>Library</OutputType>
+		<PackageReleaseNotes>Created the package.</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Documentation" Condition="'$(Configuration)' == 'Release'">
+		<DocumentationFile>bin\Release\ComponentModelMvvm.xml</DocumentationFile>
+	</PropertyGroup>
+
+	<PropertyGroup Label="Language">
+		<LangVersion>10.0</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net461'">
+		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+
+		<Using Remove="System.Net.Http" /><!-- Remove the auto-generated global using of this namespace -->
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+	</ItemGroup>
+
+</Project>
