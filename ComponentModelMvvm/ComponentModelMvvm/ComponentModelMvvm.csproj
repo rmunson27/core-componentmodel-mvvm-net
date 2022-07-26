@@ -44,4 +44,9 @@
 		<PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.Toolkit.Mvvm" Version="7.1.2" />
+	  <PackageReference Include="Rem.Core.ComponentModel" Version="1.1.1.1" />
+	</ItemGroup>
+
 </Project>
