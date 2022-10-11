@@ -1,3 +1,4 @@
+using Microsoft.Toolkit.Mvvm.ComponentModel;
 using Rem.Core.ComponentModel;
 using System;
 using System.Collections.Generic;
