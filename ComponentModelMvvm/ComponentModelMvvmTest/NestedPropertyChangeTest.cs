@@ -1,7 +1,4 @@
-using Microsoft.Toolkit.Mvvm.ComponentModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rem.Core.ComponentModel;
-using Rem.Core.ComponentModel.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
