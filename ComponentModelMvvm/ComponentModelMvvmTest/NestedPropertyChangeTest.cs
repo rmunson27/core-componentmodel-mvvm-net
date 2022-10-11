@@ -8,7 +8,7 @@ using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 
-namespace Rem.CoreTest.ComponentModel.Mvvm;
+namespace RemTest.Core.ComponentModel.Mvvm;
 
 /// <summary>
 /// Tests of the <see cref="INotifyNestedPropertyChanging"/> and <see cref="INotifyNestedPropertyChanged"/> interfaces,
