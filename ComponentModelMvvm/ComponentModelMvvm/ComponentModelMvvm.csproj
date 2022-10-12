@@ -4,10 +4,10 @@
 		<Product>Rem.Core.ComponentModel.Mvvm</Product>
 		<PackageId>Rem.Core.ComponentModel.Mvvm</PackageId>
 		<Summary>
-			An MVVM package extending the core componentmodel package.
+			A lightweight MVVM package extending the core componentmodel package.
 		</Summary>
 		<Description>
-			An MVVM package extending the core componentmodel package.
+			A lightweight MVVM package extending the core componentmodel package.
 		</Description>
 		<RootNamespace>Rem.Core.ComponentModel.Mvvm</RootNamespace>
 		<Authors>Richard E. Munson</Authors>
