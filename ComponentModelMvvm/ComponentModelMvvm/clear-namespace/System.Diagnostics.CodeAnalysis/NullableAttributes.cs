@@ -12,6 +12,22 @@ namespace System.Diagnostics.CodeAnalysis;
 /// </summary>
 internal sealed class MaybeNullAttribute : Attribute { }
 
+/// <summary>
+/// Specifies that <see langword="null"/> is allowed as an input even if the corresponding type disallows it.
+/// </summary>
+internal sealed class AllowNullAttribute : Attribute { }
+
+/// <summary>
+/// Specifies that <see langword="null"/> is disallowed as an output even if the corresponding type allows it.
+/// </summary>
+internal sealed class DisallowNullAttribute : Attribute { }
+
+/// <summary>
+/// Specifies that an output may be <see langword="null"/> even if the corresponding type disallows it.
+/// Specifies that an input argument was not <see langword="null"/> when the call returns.
+/// </summary>
+internal sealed class NotNullAttribute : Attribute { }
+
 #if false
 /// <summary>
 /// Specifies that the output will be non-null if the named parameter is non-null.
