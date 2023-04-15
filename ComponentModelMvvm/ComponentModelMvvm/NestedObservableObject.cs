@@ -52,10 +52,10 @@ public abstract class NestedObservableObject
     /// <param name="changed"></param>
     /// <param name="propertyName"></param>
     protected void SetNestedChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
+        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
         NestedPropertyChangingEventHandler changing, NestedPropertyChangedEventHandler changed,
         [CallerMemberName] string? propertyName = null)
-        where T : INotifyNestedPropertyChanging?, INotifyNestedPropertyChanged?
+        where T : INotifyNestedPropertyChanging, INotifyNestedPropertyChanged
     {
         OnPropertyChanging(propertyName);
         InitializeNestedChangeProperty(ref field, newValue, changing, changed);
@@ -72,10 +72,10 @@ public abstract class NestedObservableObject
     /// <param name="changing"></param>
     /// <param name="propertyName"></param>
     protected void SetNestedChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
+        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
         NestedPropertyChangingEventHandler changing,
         [CallerMemberName] string? propertyName = null)
-        where T : INotifyNestedPropertyChanging?
+        where T : INotifyNestedPropertyChanging
     {
         OnPropertyChanging(propertyName);
         InitializeNestedChangeProperty(ref field, newValue, changing);
@@ -92,10 +92,10 @@ public abstract class NestedObservableObject
     /// <param name="changed"></param>
     /// <param name="propertyName"></param>
     protected void SetNestedChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
+        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
         NestedPropertyChangedEventHandler changed,
         [CallerMemberName] string? propertyName = null)
-        where T : INotifyNestedPropertyChanged?
+        where T : INotifyNestedPropertyChanged
     {
         OnPropertyChanging(propertyName);
         InitializeNestedChangeProperty(ref field, newValue, changed);
@@ -115,10 +115,10 @@ public abstract class NestedObservableObject
     /// <param name="changed"></param>
     /// <param name="propertyName"></param>
     protected void SetChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
+        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
         PropertyChangingEventHandler changing, PropertyChangedEventHandler changed,
         [CallerMemberName] string? propertyName = null)
-        where T : INotifyPropertyChanging?, INotifyPropertyChanged?
+        where T : INotifyPropertyChanging, INotifyPropertyChanged
     {
         OnPropertyChanging(propertyName);
         InitializeChangeProperty(ref field, newValue, changing, changed);
@@ -135,10 +135,10 @@ public abstract class NestedObservableObject
     /// <param name="changing"></param>
     /// <param name="propertyName"></param>
     protected void SetChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
+        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
         PropertyChangingEventHandler changing,
         [CallerMemberName] string? propertyName = null)
-        where T : INotifyPropertyChanging?
+        where T : INotifyPropertyChanging
     {
         OnPropertyChanging(propertyName);
         InitializeChangeProperty(ref field, newValue, changing);
@@ -155,10 +155,10 @@ public abstract class NestedObservableObject
     /// <param name="changed"></param>
     /// <param name="propertyName"></param>
     protected void SetChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
+        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
         PropertyChangedEventHandler changed,
         [CallerMemberName] string? propertyName = null)
-        where T : INotifyPropertyChanged?
+        where T : INotifyPropertyChanged
     {
         OnPropertyChanging(propertyName);
         InitializeChangeProperty(ref field, newValue, changed);
@@ -179,9 +179,9 @@ public abstract class NestedObservableObject
     /// <param name="changing"></param>
     /// <param name="changed"></param>
     protected static void InitializeNestedChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
-        NestedPropertyChangingEventHandler changing, NestedPropertyChangedEventHandler changed)
-        where T : INotifyNestedPropertyChanging?, INotifyNestedPropertyChanged?
+			[NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
+			NestedPropertyChangingEventHandler changing, NestedPropertyChangedEventHandler changed)
+	where T : INotifyNestedPropertyChanging, INotifyNestedPropertyChanged
     {
         // Remove old events
         if (field is not null)
@@ -210,9 +210,9 @@ public abstract class NestedObservableObject
     /// <param name="newValue"></param>
     /// <param name="changing"></param>
     protected static void InitializeNestedChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
-        NestedPropertyChangingEventHandler changing)
-        where T : INotifyNestedPropertyChanging?
+			[NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
+			NestedPropertyChangingEventHandler changing)
+	where T : INotifyNestedPropertyChanging
     {
         // Remove old events
         if (field is not null)
@@ -239,9 +239,9 @@ public abstract class NestedObservableObject
     /// <param name="newValue"></param>
     /// <param name="changed"></param>
     protected static void InitializeNestedChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
-        NestedPropertyChangedEventHandler changed)
-        where T : INotifyNestedPropertyChanged?
+			[NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
+			NestedPropertyChangedEventHandler changed)
+	where T : INotifyNestedPropertyChanged
     {
         // Remove old events
         if (field is not null)
@@ -271,9 +271,9 @@ public abstract class NestedObservableObject
     /// <param name="changing"></param>
     /// <param name="changed"></param>
     protected static void InitializeChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
-        PropertyChangingEventHandler changing, PropertyChangedEventHandler changed)
-        where T : INotifyPropertyChanging?, INotifyPropertyChanged?
+			[NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
+			PropertyChangingEventHandler changing, PropertyChangedEventHandler changed)
+	where T : INotifyPropertyChanging, INotifyPropertyChanged
     {
         // Remove old events
         if (field is not null)
@@ -302,9 +302,9 @@ public abstract class NestedObservableObject
     /// <param name="newValue"></param>
     /// <param name="changing"></param>
     protected static void InitializeChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
-        PropertyChangingEventHandler changing)
-        where T : INotifyPropertyChanging?
+			[NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
+		    PropertyChangingEventHandler changing)
+    where T : notnull, INotifyPropertyChanging
     {
         // Remove old events
         if (field is not null)
@@ -331,9 +331,9 @@ public abstract class NestedObservableObject
     /// <param name="newValue"></param>
     /// <param name="changed"></param>
     protected static void InitializeChangeProperty<T>(
-        [MaybeNull, NotNullIfNotNull("newValue")] ref T field, [MaybeNull] T newValue,
-        PropertyChangedEventHandler changed)
-        where T : INotifyPropertyChanged?
+			[NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue,
+			PropertyChangedEventHandler changed)
+	where T : INotifyPropertyChanged
     {
         // Remove old events
         if (field is not null)
