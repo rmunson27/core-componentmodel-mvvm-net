@@ -9,7 +9,7 @@
 		<Authors>Richard E. Munson</Authors>
 		<Copyright>Richard E. Munson, 2022 - 2023</Copyright>
 		<WebPage>https://github.com/rmunson27/core-componentmodel-mvvm-net/</WebPage>
-		<Version>1.1</Version>
+		<Version>1.1.1</Version>
 		<PackageTags>componentmodel;utilities;nestedpropertychange;propertychange;comparison;mvvm</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
@@ -17,7 +17,7 @@
 	<PropertyGroup Label="Outputs">
 		<TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
 		<OutputType>Library</OutputType>
-		<PackageReleaseNotes>Added a new nested observable object subclass that shuffles property change event handlers internally based on the type of the property being set.</PackageReleaseNotes>
+		<PackageReleaseNotes>Added a few extra useful helper methods for the cached nested observable object that allow the concrete class to subscribe and unsubscribe from within the class.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Documentation" Condition="'$(Configuration)' == 'Release'">
