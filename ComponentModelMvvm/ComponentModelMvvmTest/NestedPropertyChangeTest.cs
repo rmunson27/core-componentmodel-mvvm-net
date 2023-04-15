@@ -116,6 +116,18 @@ public class NestedPropertyChangeTest
         cached.AValue.BValue = new();
         Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
         Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+
+        // Shouldn't pick up change if unsubscribed
+        cached.UnsubscribeFromA();
+        cached.AValue.BValue.CValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+
+        // Should pick up the change if resubscribed
+        cached.ResubscribeToA();
+        cached.AValue.BValue.CValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue), nameof(B.CValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue), nameof(B.CValue) }));
     }
     #endregion
 
@@ -128,6 +140,9 @@ public class NestedPropertyChangeTest
             set => SetObservableProperty(ref _aValue, value);
         }
         private A? _aValue;
+
+        public void UnsubscribeFromA() { UnsubscribeFromChanges(_aValue, nameof(AValue)); }
+        public void ResubscribeToA() { SubscribeToChanges(_aValue, nameof(AValue)); }
     }
 
     private sealed class A : NestedObservableObject

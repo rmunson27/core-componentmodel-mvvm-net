@@ -23,7 +23,7 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// </summary>
     protected CachedHandlerNestedObservableObject() { }
 
-    #region Setter Helpers
+    #region Event-Shuffling Helpers
     /// <summary>
     /// Sets an observable property of any type to a new value, performing all shuffling of internal events
     /// as necessary.
@@ -40,6 +40,87 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
         [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue, [CallerMemberName] string? propertyName = null)
     where T : INotifyPropertyChanging
     {
+        if (field is null && newValue is null) return;
+
+        var (nestedChanging, changing, nestedChanged, changed) = GetHandlersForType<T>(propertyName);
+        OnPropertyChanging(propertyName);
+        PropertyChangeEvents.UnsubscribeFrom(field, nestedChanging, changing, nestedChanged, changed);
+        field = newValue;
+        PropertyChangeEvents.SubscribeTo(field,
+                                         nestedChanging, changing, nestedChangingOnly: true,
+                                         nestedChanged, changed, nestedChangedOnly: true);
+        OnPropertyChanged(propertyName);
+    }
+
+    /// <summary>
+    /// Unsubscribes from relevant change events to the value of the property with the given name.
+    /// </summary>
+    /// <remarks>
+    /// This method will not change any properties, merely unsubscribe from relevant <paramref name="value"/> events.
+    /// </remarks>
+    /// <typeparam name="T">The type of property being unsubscribed from.</typeparam>
+    /// <param name="value">The value to unsubscribe from.</param>
+    /// <param name="propertyName">
+    /// The name of the property whose events are being unsubscribed from, or <see langword="null"/> to use the caller
+    /// member name.
+    /// </param>
+    protected void UnsubscribeFromChanges<T>(T? value, [CallerMemberName] string? propertyName = null)
+    {
+        if (value is null) return;
+
+        var (nestedChanging, changing, nestedChanged, changed) = GetHandlersForType<T>(propertyName);
+        PropertyChangeEvents.UnsubscribeFrom(value, nestedChanging, changing, nestedChanged, changed);
+    }
+
+    /// <summary>
+    /// Subscribes to relevant change events to the value of the property with the given name.
+    /// </summary>
+    /// <remarks>
+    /// This method will not change any properties, merely subscribe to relevant <paramref name="value"/> events.
+    /// </remarks>
+    /// <typeparam name="T">The type of property being subscribed to.</typeparam>
+    /// <param name="value">The value to subscribe to.</param>
+    /// <param name="propertyName">
+    /// The name of the property whose events are being subscribed to, or <see langword="null"/> to use the caller
+    /// member name.
+    /// </param>
+    protected void SubscribeToChanges<T>(T? value, [CallerMemberName] string? propertyName = null)
+    {
+        if (value is null) return;
+
+        var (nestedChanging, changing, nestedChanged, changed) = GetHandlersForType<T>(propertyName);
+        PropertyChangeEvents.SubscribeTo(value,
+                                         nestedChanging, changing, nestedChangingOnly: true,
+                                         nestedChanged, changed, nestedChangedOnly: true);
+    }
+
+    /// <summary>
+    /// Shuffles relevant change events from the old value of the property with the given name to the new value.
+    /// </summary>
+    /// <remarks>
+    /// This method will not change any properties, merely unsubscribe from relevant <paramref name="oldValue"/>
+    /// events and subscribe to relevant <paramref name="newValue"/> events.
+    /// </remarks>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="oldValue">The value to unsubscribe from.</param>
+    /// <param name="newValue">The value to subscribe to.</param>
+    /// <param name="propertyName">
+    /// The name of the property events are being shuffled for, or <see langword="null"/> to use the caller
+    /// member name.
+    /// </param>
+    protected void ShuffleChanges<T>(T? oldValue, T? newValue, [CallerMemberName] string? propertyName = null)
+    {
+        if (oldValue is null && newValue is null) return;
+
+        var (nestedChanging, changing, nestedChanged, changed) = GetHandlersForType<T>(propertyName);
+        PropertyChangeEvents.UnsubscribeFrom(oldValue, nestedChanging, changing, nestedChanged, changed);
+        PropertyChangeEvents.SubscribeTo(newValue,
+                                         nestedChanging, changing, nestedChangingOnly: true,
+                                         nestedChanged, changed, nestedChangedOnly: true);
+    }
+
+    private HandlerBucket GetHandlersForType<T>([CallerMemberName] string? propertyName = null)
+    {
         PropertyChangingEventHandler? changing = null;
         PropertyChangedEventHandler? changed = null;
         NestedPropertyChangingEventHandler? nestedChanging = null;
@@ -49,29 +130,29 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
 
         if (supportedEvents.HasNotification(PropertyChangeNotifications.NestedPropertyChanging))
         {
-            nestedChanging = NestedChangingHandlerFor(propertyName!);
+            nestedChanging = NestedChangingHandlerFor(propertyName);
         }
         else if (supportedEvents.HasNotification(PropertyChangeNotifications.PropertyChanging))
         {
-            changing = ChangingHandlerFor(propertyName!);
+            changing = ChangingHandlerFor(propertyName);
         }
 
         if (supportedEvents.HasNotification(PropertyChangeNotifications.NestedPropertyChanged))
         {
-            nestedChanged = NestedChangedHandlerFor(propertyName!);
+            nestedChanged = NestedChangedHandlerFor(propertyName);
         }
         else if (supportedEvents.HasNotification(PropertyChangeNotifications.PropertyChanged))
         {
-            changed = ChangedHandlerFor(propertyName!);
+            changed = ChangedHandlerFor(propertyName);
         }
 
-        OnPropertyChanging(propertyName);
-        PropertyChangeEvents.UnsubscribeFrom(field, nestedChanging, changing, nestedChanged, changed);
-        field = newValue;
-        PropertyChangeEvents.SubscribeTo(field,
-                                         nestedChanging, changing, nestedChangingOnly: true,
-                                         nestedChanged, changed, nestedChangedOnly: true);
-        OnPropertyChanged(propertyName);
+        return new()
+        {
+            Changed = changed,
+            Changing = changing,
+            NestedChanged = nestedChanged,
+            NestedChanging = nestedChanging
+        };
     }
     #endregion
 
@@ -82,22 +163,22 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// </summary>
     /// <param name="propertyName"></param>
     /// <returns></returns>
-    protected PropertyChangingEventHandler ChangingHandlerFor(string propertyName)
+    protected PropertyChangingEventHandler ChangingHandlerFor([CallerMemberName] string? propertyName = null)
     {
-        if (Handlers.TryGetValue(propertyName, out var bucket))
+        if (Handlers.TryGetValue(propertyName!, out var bucket))
         {
             if (bucket.Changing is PropertyChangingEventHandler handler) return handler;
             else
             {
                 handler = CreateChangingHandler(propertyName);
-                Handlers[propertyName] = bucket with { Changing = handler };
+                Handlers[propertyName!] = bucket with { Changing = handler };
                 return handler;
             }
         }
         else
         {
             var handler = CreateChangingHandler(propertyName);
-            Handlers[propertyName] = new() { Changing = handler };
+            Handlers[propertyName!] = new() { Changing = handler };
             return handler;
         }
     }
@@ -108,22 +189,22 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// </summary>
     /// <param name="propertyName"></param>
     /// <returns></returns>
-    protected PropertyChangedEventHandler ChangedHandlerFor(string propertyName)
+    protected PropertyChangedEventHandler ChangedHandlerFor([CallerMemberName] string? propertyName = null)
     {
-        if (Handlers.TryGetValue(propertyName, out var bucket))
+        if (Handlers.TryGetValue(propertyName!, out var bucket))
         {
             if (bucket.Changed is PropertyChangedEventHandler handler) return handler;
             else
             {
                 handler = CreateChangedHandler(propertyName);
-                Handlers[propertyName] = bucket with { Changed = handler };
+                Handlers[propertyName!] = bucket with { Changed = handler };
                 return handler;
             }
         }
         else
         {
             var handler = CreateChangedHandler(propertyName);
-            Handlers[propertyName] = new() { Changed = handler };
+            Handlers[propertyName!] = new() { Changed = handler };
             return handler;
         }
     }
@@ -134,22 +215,23 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// </summary>
     /// <param name="propertyName"></param>
     /// <returns></returns>
-    protected NestedPropertyChangingEventHandler NestedChangingHandlerFor(string propertyName)
+    protected NestedPropertyChangingEventHandler NestedChangingHandlerFor(
+        [CallerMemberName] string? propertyName = null)
     {
-        if (Handlers.TryGetValue(propertyName, out var bucket))
+        if (Handlers.TryGetValue(propertyName!, out var bucket))
         {
             if (bucket.NestedChanging is NestedPropertyChangingEventHandler handler) return handler;
             else
             {
                 handler = CreateNestedChangingHandler(propertyName);
-                Handlers[propertyName] = bucket with { NestedChanging = handler };
+                Handlers[propertyName!] = bucket with { NestedChanging = handler };
                 return handler;
             }
         }
         else
         {
             var handler = CreateNestedChangingHandler(propertyName);
-            Handlers[propertyName] = new() { NestedChanging = handler };
+            Handlers[propertyName!] = new() { NestedChanging = handler };
             return handler;
         }
     }
@@ -160,22 +242,22 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// </summary>
     /// <param name="propertyName"></param>
     /// <returns></returns>
-    protected NestedPropertyChangedEventHandler NestedChangedHandlerFor(string propertyName)
+    protected NestedPropertyChangedEventHandler NestedChangedHandlerFor([CallerMemberName] string? propertyName = null)
     {
-        if (Handlers.TryGetValue(propertyName, out var bucket))
+        if (Handlers.TryGetValue(propertyName!, out var bucket))
         {
             if (bucket.NestedChanged is NestedPropertyChangedEventHandler handler) return handler;
             else
             {
                 handler = CreateNestedChangedHandler(propertyName);
-                Handlers[propertyName] = bucket with { NestedChanged = handler };
+                Handlers[propertyName!] = bucket with { NestedChanged = handler };
                 return handler;
             }
         }
         else
         {
             var handler = CreateNestedChangedHandler(propertyName);
-            Handlers[propertyName] = new() { NestedChanged = handler };
+            Handlers[propertyName!] = new() { NestedChanged = handler };
             return handler;
         }
     }
@@ -187,6 +269,17 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
         public PropertyChangedEventHandler? Changed { get; init; }
         public NestedPropertyChangingEventHandler? NestedChanging { get; init; }
         public NestedPropertyChangedEventHandler? NestedChanged { get; init; }
+
+        public void Deconstruct(out NestedPropertyChangingEventHandler? NestedChanging,
+                                out PropertyChangingEventHandler? Changing,
+                                out NestedPropertyChangedEventHandler? NestedChanged,
+                                out PropertyChangedEventHandler? Changed)
+        {
+            NestedChanging = this.NestedChanging;
+            NestedChanged = this.NestedChanged;
+            Changing = this.Changing;
+            Changed = this.Changed;
+        }
     }
 
     #region HandlerFactories
@@ -202,9 +295,9 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// name <paramref name="propertyName"/>.
     /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private PropertyChangingEventHandler CreateChangingHandler(string propertyName)
+    private PropertyChangingEventHandler CreateChangingHandler([CallerMemberName] string? propertyName = null)
     {
-        return (sender, e) => OnChildPropertyChanging(propertyName, e);
+        return (sender, e) => OnChildPropertyChanging(propertyName!, e);
     }
 
     /// <summary>
@@ -219,9 +312,9 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// name <paramref name="propertyName"/>.
     /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private PropertyChangedEventHandler CreateChangedHandler(string propertyName)
+    private PropertyChangedEventHandler CreateChangedHandler([CallerMemberName] string? propertyName = null)
     {
-        return (sender, e) => OnChildPropertyChanged(propertyName, e);
+        return (sender, e) => OnChildPropertyChanged(propertyName!, e);
     }
 
     /// <summary>
@@ -236,9 +329,10 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// with name <paramref name="propertyName"/>.
     /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private NestedPropertyChangingEventHandler CreateNestedChangingHandler(string propertyName)
+    private NestedPropertyChangingEventHandler CreateNestedChangingHandler(
+        [CallerMemberName] string? propertyName = null)
     {
-        return (sender, e) => OnChildNestedPropertyChanging(propertyName, e);
+        return (sender, e) => OnChildNestedPropertyChanging(propertyName!, e);
     }
 
     /// <summary>
@@ -253,9 +347,10 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// with name <paramref name="propertyName"/>.
     /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private NestedPropertyChangedEventHandler CreateNestedChangedHandler(string propertyName)
+    private NestedPropertyChangedEventHandler CreateNestedChangedHandler(
+        [CallerMemberName] string? propertyName = null)
     {
-        return (sender, e) => OnChildNestedPropertyChanged(propertyName, e);
+        return (sender, e) => OnChildNestedPropertyChanged(propertyName!, e);
     }
     #endregion
 }
