@@ -65,9 +65,71 @@ public class NestedPropertyChangeTest
         }
         #endregion
     }
+
+    /// <summary>
+    /// Tests the <see cref="CachedHandlerNestedObservableObject"/> class handler caching.
+    /// </summary>
+    [TestMethod]
+    public void TestCachedNestedObservableObject()
+    {
+        #region Variable Setup
+        ImmutableStack<string> changingPath = ImmutableStack<string>.Empty, changedPath = ImmutableStack<string>.Empty;
+        #endregion
+
+        #region Event Setup
+        var cached = new Cached();
+        cached.NestedPropertyChanging += CachedNestedChanging;
+        cached.NestedPropertyChanged += CachedNestedChanged;
+        #endregion
+
+        #region Event Handlers
+        void CachedNestedChanging(object? sender, NestedPropertyChangingEventArgs e)
+        {
+            changingPath = e.PropertyPath;
+        }
+
+        void CachedNestedChanged(object? sender, NestedPropertyChangedEventArgs e)
+        {
+            changedPath = e.PropertyPath;
+        }
+        #endregion
+
+        var a = new A();
+        cached.AValue = a;
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+
+        a.BValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+
+        cached.AValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+
+        // Shouldn't run again - should have shuffled the event handlers internally
+        a.BValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+
+        // Should run now - should have shuffled the event handlers internally
+        cached.AValue.BValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+    }
     #endregion
 
     #region Classes
+    private sealed class Cached : CachedHandlerNestedObservableObject
+    {
+        public A? AValue
+        {
+            get => _aValue;
+            set => SetObservableProperty(ref _aValue, value);
+        }
+        private A? _aValue;
+    }
+
     private sealed class A : NestedObservableObject
     {
         public B? BValue
