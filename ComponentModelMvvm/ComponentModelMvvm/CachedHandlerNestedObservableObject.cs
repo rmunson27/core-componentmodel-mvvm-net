@@ -38,7 +38,6 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// </param>
     protected void SetObservableProperty<T>(
         [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue, [CallerMemberName] string? propertyName = null)
-    where T : INotifyPropertyChanging
     {
         if (field is null && newValue is null) return;
 
