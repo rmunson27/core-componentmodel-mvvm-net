@@ -258,7 +258,7 @@ public class NestedPropertyChangeTest
             => OnChildPropertyChanged(nameof(CValue), e);
     }
 
-    private sealed class C : ObservableObject
+    private sealed class C : RemObservableObject
     {
         public bool BoolValue
         {

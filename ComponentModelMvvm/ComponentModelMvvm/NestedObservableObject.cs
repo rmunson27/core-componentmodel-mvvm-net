@@ -15,7 +15,7 @@ namespace Rem.Core.ComponentModel.Mvvm;
 /// <see cref="ObservableObject.PropertyChanged"/> events are triggered, respectively.
 /// </remarks>
 public abstract class NestedObservableObject
-    : ObservableObject, INotifyNestedPropertyChanged, INotifyNestedPropertyChanging
+    : RemObservableObject, INotifyNestedPropertyChanged, INotifyNestedPropertyChanging
 {
     #region Events
     /// <inheritdoc cref="INotifyNestedPropertyChanged.NestedPropertyChanged"/>

@@ -20,7 +20,7 @@ namespace Rem.Core.ComponentModel.Mvvm;
 /// <see cref="INotifyNestedPropertyChanged"/> when the class in question has a lot of nested properties.
 /// Namely, it removes the need to define a separate property or method for each required handler manually.
 /// </remarks>
-public abstract class CachedNestedObservableObject : ObservableObject,
+public abstract class CachedNestedObservableObject : RemObservableObject,
                                                      INotifyNestedPropertyChanging, INotifyNestedPropertyChanged
 {
     /// <summary>

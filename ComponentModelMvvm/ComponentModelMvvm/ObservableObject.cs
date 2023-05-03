@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Xml.Serialization;
 using ObservableObjectBase = CommunityToolkit.Mvvm.ComponentModel.ObservableObject;
 
 namespace Rem.Core.ComponentModel.Mvvm;
@@ -18,7 +19,7 @@ namespace Rem.Core.ComponentModel.Mvvm;
 /// <see cref="ObservableObjectBase.SetPropertyAndNotifyOnCompletion"/> overloads, or they may be added
 /// in an upcoming version.
 /// </remarks>
-public abstract class ObservableObject : ObservableObjectBase
+public abstract class RemObservableObject : ObservableObjectBase
 {
     /// <inheritdoc cref="ObservableObjectBase.SetProperty{T}(ref T, T, string?)"/>
     protected new bool SetProperty<T>(
