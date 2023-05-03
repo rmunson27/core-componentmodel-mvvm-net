@@ -24,7 +24,7 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     /// <summary>
     /// Stores the property change handlers for this type.
     /// </summary>
-    protected readonly PropertyChangeEventHandlerCache _cache = new();
+    private PropertyChangeEventHandlerCache _cache = new();
 
     /// <summary>
     /// Constructs a new <see cref="CachedHandlerNestedObservableObject"/>.

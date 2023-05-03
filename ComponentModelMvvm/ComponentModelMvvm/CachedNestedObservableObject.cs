@@ -26,7 +26,7 @@ public abstract class CachedNestedObservableObject : RemObservableObject,
     /// <summary>
     /// Stores the property change handlers for this type.
     /// </summary>
-    protected readonly PropertyChangeEventHandlerCache _cache = new();
+    private PropertyChangeEventHandlerCache _cache = new();
 
     /// <summary>
     /// An event that occurs when a nested property is changing.

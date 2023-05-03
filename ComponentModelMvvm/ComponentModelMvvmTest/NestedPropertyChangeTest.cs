@@ -197,9 +197,93 @@ public class NestedPropertyChangeTest
                                     new[] { nameof(CachedObject.AValue), nameof(A.BValue), nameof(B.CValue) }));
     }
 
+    /// <summary>
+    /// Tests a longer object with cached handlers.
+    /// </summary>
+    /// <remarks>
+    /// This was causing a problem after initial release of the feature (1.1.2), so this test proves the problem
+    /// is solved.
+    /// </remarks>
+    [TestMethod]
+    public void TestLongCachedObject()
+    {
+        Assert.IsNotNull(new LongCachedObject(new A(), new A(), new A(), new A(), new A(), new A(), new A(), new A()));
+    }
+
     #endregion
 
     #region Classes
+    private sealed class LongCachedObject : CachedNestedObservableObject
+    {
+        public LongCachedObject(A? value1, A? value2, A? value3, A? value4, A? value5, A? value6, A? value7, A? value8)
+        {
+            Value1 = value1; SubscribeToChanges(Value1, nameof(Value1));
+            Value2 = value2; SubscribeToChanges(Value2, nameof(Value2));
+            Value3 = value3; SubscribeToChanges(Value3, nameof(Value3));
+            Value4 = value4; SubscribeToChanges(Value4, nameof(Value4));
+            Value5 = value5; SubscribeToChanges(Value5, nameof(Value5));
+            Value6 = value6; SubscribeToChanges(Value6, nameof(Value6));
+            Value7 = value7; SubscribeToChanges(Value7, nameof(Value7));
+            Value8 = value8; SubscribeToChanges(Value8, nameof(Value8));
+        }
+
+        public A? Value1
+        {
+            get => _value1;
+            set => _value1 = value;
+        }
+        private A? _value1;
+
+        public A? Value2
+        {
+            get => _value2;
+            set => _value2 = value;
+        }
+        private A? _value2;
+
+        public A? Value3
+        {
+            get => _value3;
+            set => _value3 = value;
+        }
+        private A? _value3;
+
+        public A? Value4
+        {
+            get => _value4;
+            set => _value4 = value;
+        }
+        private A? _value4;
+
+        public A? Value5
+        {
+            get => _value5;
+            set => _value5 = value;
+        }
+        private A? _value5;
+
+        public A? Value6
+        {
+            get => _value6;
+            set => _value6 = value;
+        }
+        private A? _value6;
+
+        public A? Value7
+        {
+            get => _value7;
+            set => _value7 = value;
+        }
+        private A? _value7;
+
+        public A? Value8
+        {
+            get => _value8;
+            set => _value8 = value;
+        }
+        private A? _value8;
+    }
+
     private sealed class CachedObject : CachedNestedObservableObject
     {
         public A? AValue
