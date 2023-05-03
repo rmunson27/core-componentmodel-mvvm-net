@@ -379,7 +379,6 @@ public abstract class NestedObservableObject
     }
     #endregion
 
-    #region Event Handler Building Helpers
     /// <summary>
     /// Raises the <see cref="NestedPropertyChanging"/> event with arguments created by adding the child property name
     /// to the event arguments passed in.
@@ -401,7 +400,7 @@ public abstract class NestedObservableObject
     {
         if (e.PropertyName is not null)
         {
-            OnNestedPropertyChanging(new(ImmutableStack.CreateRange(new[] { e.PropertyName, childPropertyName })));
+            OnNestedPropertyChanging(new(ImmutableStack.Create(e.PropertyName).Push(childPropertyName)));
         }
     }
 
@@ -426,10 +425,9 @@ public abstract class NestedObservableObject
     {
         if (e.PropertyName is not null)
         {
-            OnNestedPropertyChanged(new(ImmutableStack.CreateRange(new[] { e.PropertyName, childPropertyName })));
+            OnNestedPropertyChanged(new(ImmutableStack.Create(e.PropertyName).Push(childPropertyName)));
         }
     }
-    #endregion
 
     #region Event Triggers
     /// <summary>
