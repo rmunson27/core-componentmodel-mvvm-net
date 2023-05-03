@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using Rem.Core.ComponentModel;
 using System;
 using System.Collections.Generic;
@@ -70,14 +69,14 @@ public class NestedPropertyChangeTest
     /// Tests the <see cref="CachedHandlerNestedObservableObject"/> class handler caching.
     /// </summary>
     [TestMethod]
-    public void TestCachedNestedObservableObject()
+    public void TestCachedHandlerNestedObservableObject()
     {
         #region Variable Setup
         ImmutableStack<string> changingPath = ImmutableStack<string>.Empty, changedPath = ImmutableStack<string>.Empty;
         #endregion
 
         #region Event Setup
-        var cached = new Cached();
+        var cached = new CachedHandlerObject();
         cached.NestedPropertyChanging += CachedNestedChanging;
         cached.NestedPropertyChanged += CachedNestedChanged;
         #endregion
@@ -96,43 +95,127 @@ public class NestedPropertyChangeTest
 
         var a = new A();
         cached.AValue = a;
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue) }));
 
         a.BValue = new();
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue) }));
 
         cached.AValue = new();
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue) }));
 
         // Shouldn't run again - should have shuffled the event handlers internally
         a.BValue = new();
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue) }));
 
         // Should run now - should have shuffled the event handlers internally
         cached.AValue.BValue = new();
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue) }));
 
         // Shouldn't pick up change if unsubscribed
         cached.UnsubscribeFromA();
         cached.AValue.BValue.CValue = new();
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue) }));
 
         // Should pick up the change if resubscribed
         cached.ResubscribeToA();
         cached.AValue.BValue.CValue = new();
-        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue), nameof(B.CValue) }));
-        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(Cached.AValue), nameof(A.BValue), nameof(B.CValue) }));
+        Assert.IsTrue(changingPath.SequenceEqual(
+                                    new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue), nameof(B.CValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(
+                                    new[] { nameof(CachedHandlerObject.AValue), nameof(A.BValue), nameof(B.CValue) }));
     }
+
+    /// <summary>
+    /// Tests the <see cref="CachedNestedObservableObject"/> class handler caching.
+    /// </summary>
+    [TestMethod]
+    public void TestCachedNestedObservableObject()
+    {
+        #region Variable Setup
+        ImmutableStack<string> changingPath = ImmutableStack<string>.Empty, changedPath = ImmutableStack<string>.Empty;
+        #endregion
+
+        #region Event Setup
+        var cached = new CachedObject();
+        cached.NestedPropertyChanging += CachedNestedChanging;
+        cached.NestedPropertyChanged += CachedNestedChanged;
+        #endregion
+
+        #region Event Handlers
+        void CachedNestedChanging(object? sender, NestedPropertyChangingEventArgs e)
+        {
+            changingPath = e.PropertyPath;
+        }
+
+        void CachedNestedChanged(object? sender, NestedPropertyChangedEventArgs e)
+        {
+            changedPath = e.PropertyPath;
+        }
+        #endregion
+
+        var a = new A();
+        cached.AValue = a;
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedObject.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedObject.AValue) }));
+
+        a.BValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedObject.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedObject.AValue), nameof(A.BValue) }));
+
+        cached.AValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedObject.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedObject.AValue) }));
+
+        // Shouldn't run again - should have shuffled the event handlers internally
+        a.BValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedObject.AValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedObject.AValue) }));
+
+        // Should run now - should have shuffled the event handlers internally
+        cached.AValue.BValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedObject.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedObject.AValue), nameof(A.BValue) }));
+
+        // Shouldn't pick up change if unsubscribed
+        cached.UnsubscribeFromA();
+        cached.AValue.BValue.CValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(new[] { nameof(CachedObject.AValue), nameof(A.BValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(new[] { nameof(CachedObject.AValue), nameof(A.BValue) }));
+
+        // Should pick up the change if resubscribed
+        cached.ResubscribeToA();
+        cached.AValue.BValue.CValue = new();
+        Assert.IsTrue(changingPath.SequenceEqual(
+                                    new[] { nameof(CachedObject.AValue), nameof(A.BValue), nameof(B.CValue) }));
+        Assert.IsTrue(changedPath.SequenceEqual(
+                                    new[] { nameof(CachedObject.AValue), nameof(A.BValue), nameof(B.CValue) }));
+    }
+
     #endregion
 
     #region Classes
-    private sealed class Cached : CachedHandlerNestedObservableObject
+    private sealed class CachedObject : CachedNestedObservableObject
+    {
+        public A? AValue
+        {
+            get => _aValue;
+            set => SetProperty(ref _aValue, value);
+        }
+        private A? _aValue;
+
+        public void UnsubscribeFromA() { UnsubscribeFromChanges(_aValue, nameof(AValue)); }
+        public void ResubscribeToA() { SubscribeToChanges(_aValue, nameof(AValue)); }
+    }
+
+#pragma warning disable CS0618 // Still needs testing
+    private sealed class CachedHandlerObject : CachedHandlerNestedObservableObject
+#pragma warning restore CS0618
     {
         public A? AValue
         {

@@ -1,25 +1,27 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Rem.Core.ComponentModel.Mvvm;
 
 /// <summary>
-/// A <see cref="NestedObservableObject"/> subclass that caches its accessed event handlers by name in order to allow
-/// the class to automatically create them on demand.
+/// A base class for objects that notify of nested property changes.
 /// </summary>
 /// <remarks>
-/// This class can be useful for implementing <see cref="INotifyNestedPropertyChanging"/> and
+/// This class can be used as a base in lieu of <see cref="NestedObservableObject"/> if there is no need for extending
+/// classes to have control over setting properties based on which specific property change notifications they offer.
+/// The class may simplify things in such cases, since all nested property change notification subscriptions will be
+/// handled automatically by a simple call to <see cref="CachedNestedObservableObject.SetProperty"/>.
+/// <para/>
+/// This class also can be useful for implementing <see cref="INotifyNestedPropertyChanging"/> and
 /// <see cref="INotifyNestedPropertyChanged"/> when the class in question has a lot of nested properties.
 /// Namely, it removes the need to define a separate property or method for each required handler manually.
-/// 
-/// This class is deprecated - <see cref="CachedNestedObservableObject"/> should be used instead, which handles the
-/// cache internally but does not expose any property change setter methods.
 /// </remarks>
-[Obsolete("This will be removed in an upcoming version. "
-            + "Use Rem.Core.ComponentModel.Mvvm.CachedNestedObservableObject instead.")]
-public abstract class CachedHandlerNestedObservableObject : NestedObservableObject
+public abstract class CachedNestedObservableObject : ObservableObject,
+                                                     INotifyNestedPropertyChanging, INotifyNestedPropertyChanged
 {
     /// <summary>
     /// Stores the property change handlers for this type.
@@ -27,38 +29,65 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
     protected readonly PropertyChangeEventHandlerCache _cache = new();
 
     /// <summary>
+    /// An event that occurs when a nested property is changing.
+    /// </summary>
+    public event NestedPropertyChangingEventHandler? NestedPropertyChanging;
+
+    /// <summary>
+    /// An event that occurs when a nested property has changed.
+    /// </summary>
+    public event NestedPropertyChangedEventHandler? NestedPropertyChanged;
+
+    /// <summary>
     /// Constructs a new <see cref="CachedHandlerNestedObservableObject"/>.
     /// </summary>
-    protected CachedHandlerNestedObservableObject() { }
-
-    #region Event-Shuffling Helpers
-    /// <summary>
-    /// Sets an observable property of any type to a new value, performing all shuffling of internal events
-    /// as necessary.
-    /// </summary>
-    /// <typeparam name="T">The type of property to set.</typeparam>
-    /// <param name="field">A reference to the field being set.</param>
-    /// <param name="newValue">The new value to set.</param>
-    /// <param name="propertyName">
-    /// The name of the property being set.
-    /// This can be set to <see langword="null"/> when called from within a property or method to use the name of the
-    /// property or method.
-    /// </param>
-    protected void SetObservableProperty<T>(
-        [NotNullIfNotNull(nameof(newValue))] ref T? field, T? newValue, [CallerMemberName] string? propertyName = null)
+    protected CachedNestedObservableObject()
     {
-        if (field is null && newValue is null) return;
+        // Ensure that nested property changes are fired whenever property changes are
+        PropertyChanging += This_PropertyChanging;
+        PropertyChanged += This_PropertyChanged;
+    }
 
-        GetCachedHandlersForType<T>(out var nestedChanging, out var changing,
-                                    out var nestedChanged, out var changed,
-                                    propertyName);
-        OnPropertyChanging(propertyName);
-        PropertyChangeEvents.UnsubscribeFrom(field, nestedChanging, changing, nestedChanged, changed);
-        field = newValue;
-        PropertyChangeEvents.SubscribeTo(field,
-                                         nestedChanging, changing, nestedChangingOnly: true,
-                                         nestedChanged, changed, nestedChangedOnly: true);
-        OnPropertyChanged(propertyName);
+    #region Event Handlers
+    /// <summary>
+    /// Fires the <see cref="NestedPropertyChanging"/> event whenever the
+    /// <see cref="ObservableObject.PropertyChanging"/> event is triggered (so long as the property name wrapped in
+    /// the event arguments is not <see langword="null"/>).
+    /// </summary>
+    /// <param name="_"></param>
+    /// <param name="e"></param>
+    private void This_PropertyChanging(object? _, PropertyChangingEventArgs e)
+    {
+        if (e.PropertyName is not null) OnNestedPropertyChanging(new(e.PropertyName));
+    }
+
+    /// <summary>
+    /// Fires the <see cref="NestedPropertyChanged"/> event whenever the <see cref="ObservableObject.PropertyChanged"/>
+    /// event is triggered (so long as the property name wrapped in the event arguments is not <see langword="null"/>).
+    /// </summary>
+    /// <param name="_"></param>
+    /// <param name="e"></param>
+    private void This_PropertyChanged(object? _, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not null) OnNestedPropertyChanged(new(e.PropertyName));
+    }
+    #endregion
+
+    #region Event-Shuffling
+    /// <inheritdoc/>
+    protected override void SetUpAfterPropertyChanging<T>(T? oldValue, [CallerMemberName] string? propertyName = null)
+    where T : default
+    {
+        base.SetUpAfterPropertyChanging(oldValue);
+        UnsubscribeFromChanges(oldValue, propertyName);
+    }
+
+    /// <inheritdoc/>
+    protected override void CleanUpBeforePropertyChanged<T>(T? newValue, [CallerMemberName] string? propertyName = null)
+    where T : default
+    {
+        base.CleanUpBeforePropertyChanged(newValue, propertyName);
+        SubscribeToChanges(newValue, propertyName);
     }
 
     /// <summary>
@@ -286,6 +315,78 @@ public abstract class CachedHandlerNestedObservableObject : NestedObservableObje
         [CallerMemberName] string? propertyName = null)
     {
         return (sender, e) => OnChildNestedPropertyChanged(propertyName!, e);
+    }
+    #endregion
+
+    #region Event Handler Building Helpers
+    /// <summary>
+    /// Raises the <see cref="NestedPropertyChanging"/> event with arguments created by adding the child property name
+    /// to the event arguments passed in.
+    /// </summary>
+    /// <param name="childPropertyName"></param>
+    /// <param name="e"></param>
+    protected void OnChildNestedPropertyChanging(string childPropertyName, NestedPropertyChangingEventArgs e)
+    {
+        OnNestedPropertyChanging(new(e.PropertyPath.Push(childPropertyName)));
+    }
+
+    /// <summary>
+    /// Raises the <see cref="NestedPropertyChanging"/> event with arguments created by adding the child property
+    /// name to the event arguments passed in.
+    /// </summary>
+    /// <param name="childPropertyName"></param>
+    /// <param name="e"></param>
+    protected void OnChildPropertyChanging(string childPropertyName, PropertyChangingEventArgs e)
+    {
+        if (e.PropertyName is not null)
+        {
+            OnNestedPropertyChanging(new(ImmutableStack.Create(e.PropertyName).Push(childPropertyName)));
+        }
+    }
+
+    /// <summary>
+    /// Raises the <see cref="NestedPropertyChanged"/> event with arguments created by adding the child property name
+    /// to the event arguments passed in.
+    /// </summary>
+    /// <param name="childPropertyName"></param>
+    /// <param name="e"></param>
+    protected void OnChildNestedPropertyChanged(string childPropertyName, NestedPropertyChangedEventArgs e)
+    {
+        OnNestedPropertyChanged(new(e.PropertyPath.Push(childPropertyName)));
+    }
+
+    /// <summary>
+    /// Raises the <see cref="NestedPropertyChanged"/> event with arguments created by adding the child property name
+    /// to the event arguments passed in.
+    /// </summary>
+    /// <param name="childPropertyName"></param>
+    /// <param name="e"></param>
+    protected void OnChildPropertyChanged(string childPropertyName, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not null)
+        {
+            OnNestedPropertyChanged(new(ImmutableStack.Create(e.PropertyName).Push(childPropertyName)));
+        }
+    }
+    #endregion
+
+    #region Event Triggers
+    /// <summary>
+    /// Raises the <see cref="NestedPropertyChanging"/> event.
+    /// </summary>
+    /// <param name="e"></param>
+    protected virtual void OnNestedPropertyChanging(NestedPropertyChangingEventArgs e)
+    {
+        NestedPropertyChanging?.Invoke(this, e);
+    }
+
+    /// <summary>
+    /// Raises the <see cref="NestedPropertyChanged"/> event.
+    /// </summary>
+    /// <param name="e"></param>
+    protected virtual void OnNestedPropertyChanged(NestedPropertyChangedEventArgs e)
+    {
+        NestedPropertyChanged?.Invoke(this, e);
     }
     #endregion
 }
