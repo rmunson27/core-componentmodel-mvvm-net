@@ -9,7 +9,7 @@
 		<Authors>Richard E. Munson</Authors>
 		<Copyright>Richard E. Munson, 2022 - 2023</Copyright>
 		<WebPage>https://github.com/rmunson27/core-componentmodel-mvvm-net/</WebPage>
-		<Version>1.1.1.1</Version>
+		<Version>1.1.2</Version>
 		<PackageTags>componentmodel;utilities;nestedpropertychange;propertychange;comparison;mvvm</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	</PropertyGroup>
@@ -17,7 +17,7 @@
 	<PropertyGroup Label="Outputs">
 		<TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
 		<OutputType>Library</OutputType>
-		<PackageReleaseNotes>Removed an unnecessary constraint from the cached handler nested observable object `SetObservableProperty` method.</PackageReleaseNotes>
+		<PackageReleaseNotes>Patched a possible race condition in `NestedObservableObject`. Added new property change event cache class for nested property change. Added `CachedNestedObservableObject` class using the newly added cache exclusively, and deprecated `CachedHandlerNestedObservableObject`.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Documentation" Condition="'$(Configuration)' == 'Release'">
